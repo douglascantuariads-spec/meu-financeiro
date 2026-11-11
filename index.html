@@ -125,7 +125,35 @@ $('#expenseForm').addEventListener('submit',e=>{e.preventDefault();const f=new F
 $('#incomeForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);data.incomes.push({id:crypto.randomUUID(),description:f.get('description').trim(),amount:Number(f.get('amount')),date:f.get('date'),category:f.get('category')});e.target.reset();e.target.elements.date.value=today();save()});
 document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===b.dataset.view));window.scrollTo(0,0)}));
 $('#monthFilter').addEventListener('change',render);
-function backup(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`meu-financeiro-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
+async function backup(){
+  // Rele a fonte persistida no momento da exportação e compare com o estado em memória.
+  // Isso evita gerar um arquivo vazio caso a tela e o armazenamento estejam dessincronizados.
+  const count=x=>(Array.isArray(x?.expenses)?x.expenses.length:0)+(Array.isArray(x?.incomes)?x.incomes.length:0);
+  let stored=null;
+  try{stored=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
+  const storedValid=stored&&Array.isArray(stored.expenses)&&Array.isArray(stored.incomes);
+  const memoryValid=data&&Array.isArray(data.expenses)&&Array.isArray(data.incomes);
+  const source=storedValid&&(!memoryValid||count(stored)>count(data))?stored:data;
+  if(!source||!Array.isArray(source.expenses)||!Array.isArray(source.incomes)){
+    alert('Não foi possível localizar seus lançamentos para criar o backup. Nenhum dado foi alterado.');return;
+  }
+  const payload={format:'meu-financeiro-backup',version:1,exportedAt:new Date().toISOString(),expenses:source.expenses,incomes:source.incomes};
+  const total=count(payload);
+  if(total===0){
+    alert('O backup não foi gerado porque não encontramos receitas ou despesas salvas. Seus dados não foram alterados.');return;
+  }
+  const blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json;charset=utf-8'});
+  const filename=`meu-financeiro-backup-${today()}.json`;
+  const file=new File([blob],filename,{type:'application/json'});
+  // No iPhone, compartilhar o arquivo permite salvá-lo em Arquivos/iCloud Drive.
+  if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+    try{await navigator.share({files:[file],title:'Backup do Meu Financeiro',text:`${payload.expenses.length} despesas e ${payload.incomes.length} receitas`});return}catch(err){if(err?.name==='AbortError')return;}
+  }
+  const url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download=filename;a.style.display='none';document.body.appendChild(a);a.click();
+  setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},60000);
+  toast(`Backup preparado: ${payload.expenses.length} despesas e ${payload.incomes.length} receitas.`);
+}
 $('#backupBtn').onclick=backup;$('#exportBtn').onclick=backup;
 $('#importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!Array.isArray(obj.expenses)||!Array.isArray(obj.incomes))throw Error();if(confirm('Importar este backup e substituir os dados atuais?')){data=obj;localStorage.setItem(KEY,JSON.stringify(data));render();toast('Backup importado.')}}catch(err){alert('Arquivo de backup inválido.')}e.target.value=''};
 $('#pdfBtn').onclick=()=>window.print();
