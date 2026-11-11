@@ -37,6 +37,8 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
   <section id="home" class="view active">
     <div class="balance"><div class="eyebrow">Saldo do período</div><div class="big" id="balance">R$ 0,00</div><div class="twocol"><div class="metric"><small>↙ Total de entradas</small><strong class="positive" id="incomeTotal">R$ 0,00</strong></div><div class="metric"><small>↗ Total de saídas</small><strong class="negative" id="expenseTotal">R$ 0,00</strong></div></div></div>
     <div class="grid">
+      <div class="card full"><h2>Comparativo mensal</h2><div id="monthComparison" class="list"></div><p class="hint">Comparação do período selecionado com o mês anterior. A variação considera os valores registrados em cada mês.</p></div>
+      <div class="card full"><h2>Evolução dos gastos · últimos 6 meses</h2><div id="monthlyExpenseChart"></div><p class="hint">Total de despesas por mês, incluindo parcelas de cartão na competência registrada.</p></div>
       <div class="card wide2"><h2>Despesas por categoria</h2><div id="categoryChart" class="muted">Nenhuma despesa neste período.</div></div>
       <div class="card wide2"><h2>Crédito x débito</h2><div id="paymentChart" class="muted">Nenhuma despesa neste período.</div></div>
       <div class="card full"><div class="sectionhead"><h2>Movimentações recentes</h2><span class="muted" id="countLabel">0 lançamentos</span></div><div id="recentList" class="list"></div></div>
@@ -117,7 +119,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
   </section>
   <section id="settings" class="view">
     <div class="card"><h2>Seus dados</h2><p class="muted">Os lançamentos ficam armazenados neste navegador e neste aparelho. Não há conexão com bancos nem envio automático para servidores.</p><div class="actions"><button class="secondary" id="exportBtn">Exportar backup JSON</button><label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">Importar backup<input id="importFile" type="file" accept="application/json" hidden></label></div><p class="hint">Atenção: limpar os dados do Safari/navegador pode apagar os lançamentos. Faça backups regularmente. Para usar em outro aparelho, exporte e importe o arquivo JSON.</p></div>
-    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.6</p><p class="hint">Controla cartões, compras parceladas, metas financeiras e investimentos com acompanhamento semiautomático. A primeira parcela fica no mês da compra; as demais, nos meses seguintes.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.7</p><p class="hint">Controla cartões, compras parceladas, metas financeiras e investimentos com acompanhamento semiautomático. A primeira parcela fica no mês da compra; as demais, nos meses seguintes.</p></div>
   </section>
 </main>
 <nav class="no-print">
@@ -144,6 +146,17 @@ function toast(msg){const t=$('#toast');t.textContent=msg;t.style.display='block
 function selected(){return $('#monthFilter').value||currentMonth()}
 function inMonth(x){return (x.date||'').slice(0,7)===selected()}
 function sum(arr){return arr.reduce((s,x)=>s+Number(x.amount||0),0)}
+function monthOffset(month,offset){const [y,m]=month.split('-').map(Number);const d=new Date(y,m-1+offset,1);return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}`}
+function monthLabel(month){const [y,m]=month.split('-').map(Number);return new Date(y,m-1,1).toLocaleDateString('pt-BR',{month:'short',year:'2-digit'}).replace('.','')}
+function monthTotals(month){return {income:sum(data.incomes.filter(x=>(x.date||'').slice(0,7)===month)),expense:sum(data.expenses.filter(x=>(x.date||'').slice(0,7)===month))}}
+function variationText(current,previous){const diff=current-previous;const pct=previous?diff/previous*100:null;const sign=diff>0?'+':diff<0?'−':'';return `${sign}${money(Math.abs(diff))}${pct===null?' · sem base anterior':` (${sign}${Math.abs(pct).toFixed(1).replace('.',',')}%)`}`}
+function renderMonthInsights(){
+ const month=selected(),prev=monthOffset(month,-1),a=monthTotals(month),b=monthTotals(prev);
+ const rows=[['Despesas',a.expense,b.expense,'negative',true],['Receitas',a.income,b.income,'positive',false],['Saldo',a.income-a.expense,b.income-b.expense,(a.income-a.expense)>=(b.income-b.expense)?'positive':'negative',false]];
+ $('#monthComparison').innerHTML=`<div class="item"><div><strong>${escapeHtml(monthLabel(month))}</strong><small>Período selecionado</small></div><strong>${money(a.income-a.expense)}</strong></div><div class="item"><div><strong>${escapeHtml(monthLabel(prev))}</strong><small>Mês anterior</small></div><strong>${money(b.income-b.expense)}</strong></div>`+rows.map(([label,cur,old,cls,expense])=>{const diff=cur-old,up=diff>0;const color=expense?(up?'negative':'positive'):(up?'positive':'negative');return `<div class="item"><div><strong>${label}</strong><small>${money(cur)} neste mês · ${money(old)} no anterior</small></div><strong class="${color}">${variationText(cur,old)}</strong></div>`}).join('');
+ const months=Array.from({length:6},(_,i)=>monthOffset(month,i-5));const values=months.map(m=>({month:m,value:monthTotals(m).expense}));const max=Math.max(0,...values.map(x=>x.value));
+ $('#monthlyExpenseChart').innerHTML=values.some(x=>x.value>0)?values.map(x=>bar(monthLabel(x.month),x.value,max,'#ff7887')).join(''):'<div class="empty">Ainda não há despesas registradas nos últimos seis meses.</div>';
+}
 function formatDate(s){if(!s)return '-';const a=s.split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:s}
 function cardName(id){return data.cards.find(c=>c.id===id)?.name||'Cartão removido'}
 function invoiceKey(cardId,month){return `${cardId}|${month}`}
@@ -169,6 +182,7 @@ function render(){
  const ex=data.expenses.filter(inMonth),inc=data.incomes.filter(inMonth),out=sum(ex),inside=sum(inc),balance=inside-out;
  $('#balance').textContent=money(balance);$('#balance').style.color=balance<0?'var(--red)':'var(--text)';
  $('#incomeTotal').textContent=money(inside);$('#expenseTotal').textContent=money(out);
+ renderMonthInsights();
  $('#countLabel').textContent=`${ex.length+inc.length} lançamentos`;
  const recent=[...ex.map(x=>({...x,type:'expense'})),...inc.map(x=>({...x,type:'income'}))].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
  $('#recentList').innerHTML=recent.length?recent.map(x=>itemHTML(x,x.type)).join(''):'<div class="empty">Adicione sua primeira receita ou despesa.</div>';
