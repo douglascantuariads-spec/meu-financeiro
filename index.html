@@ -1,0 +1,136 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#0b1220">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Meu Financeiro">
+<link rel="manifest" href="manifest.webmanifest">
+<title>Meu Financeiro</title>
+<style>
+:root{color-scheme:dark;--bg:#0b1220;--panel:#121d2e;--panel2:#19263a;--line:#26364d;--muted:#91a0b5;--text:#f4f7fb;--green:#59d6a5;--red:#ff7887;--blue:#7daeff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#14233a 0,#0b1220 48%);color:var(--text);font:15px -apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;min-height:100vh}
+header{padding:22px 18px 12px;max-width:900px;margin:auto;display:flex;align-items:center;justify-content:space-between;gap:12px}
+.brand{display:flex;align-items:center;gap:12px}.logo{width:44px;height:44px;border-radius:14px;background:#1c3548;color:var(--green);display:grid;place-items:center;font-size:23px}.brand h1{font-size:19px;margin:0}.brand p{margin:3px 0 0;color:var(--muted);font-size:10px;letter-spacing:1.3px}
+main{max-width:900px;margin:auto;padding:8px 16px 110px}.monthrow{display:flex;align-items:center;justify-content:space-between;margin:10px 2px 14px}.monthrow label{font-size:12px;color:var(--muted)}input,select,button{font:inherit}.monthrow input{background:var(--panel);color:var(--text);border:1px solid var(--line);padding:9px 10px;border-radius:10px}
+.balance{background:linear-gradient(135deg,#1a3041,#142337 68%,#172b39);border:1px solid #2b4855;border-radius:22px;padding:20px;margin-bottom:13px;box-shadow:0 12px 35px #0003}.eyebrow{color:#a8bacb;font-size:11px;letter-spacing:1.1px;text-transform:uppercase}.big{font-size:32px;font-weight:750;margin:8px 0 18px;letter-spacing:-1px}.twocol{display:grid;grid-template-columns:1fr 1fr;gap:10px}.metric{background:#0c1928aa;border-radius:14px;padding:12px}.metric small{color:#a8bacb;display:block;margin-bottom:7px}.metric strong{font-size:17px}.positive{color:var(--green)}.negative{color:var(--red)}
+.grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;margin:13px 0}.card{background:linear-gradient(160deg,#152237,#111b2b);border:1px solid var(--line);border-radius:18px;padding:16px}.card h2{font-size:14px;margin:0 0 14px}.card.full{grid-column:1/-1}.sectionhead{display:flex;justify-content:space-between;align-items:center;gap:10px;margin-bottom:12px}.sectionhead h2{margin:0}
+button{border:0;cursor:pointer}.primary{background:var(--green);color:#092018;padding:11px 14px;border-radius:12px;font-weight:700}.secondary{background:var(--panel2);color:var(--text);border:1px solid var(--line);padding:9px 12px;border-radius:11px}.tabs{display:flex;gap:8px;overflow:auto;margin:18px 0 12px}.tab{white-space:nowrap;background:transparent;color:var(--muted);border:1px solid var(--line);padding:9px 13px;border-radius:12px}.tab.active{background:#1b3444;color:var(--green);border-color:#376354}
+.formgrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}.field{display:flex;flex-direction:column;gap:6px}.field.wide{grid-column:1/-1}.field label{font-size:11px;color:var(--muted)}.field input,.field select{width:100%;background:#0b1523;border:1px solid var(--line);border-radius:10px;color:var(--text);padding:12px;min-width:0}.actions{display:flex;gap:8px;flex-wrap:wrap;margin-top:13px}
+.list{display:flex;flex-direction:column;gap:8px}.item{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:11px;background:#0e1928;border:1px solid #1f2e43;border-radius:13px}.item strong{font-size:13px;display:block}.item small{color:var(--muted);font-size:11px}.item .amount{font-weight:700;white-space:nowrap}.empty{color:var(--muted);font-size:13px;padding:18px;text-align:center;border:1px dashed var(--line);border-radius:12px}
+.barrow{display:grid;grid-template-columns:90px 1fr 78px;gap:9px;align-items:center;margin:11px 0;font-size:11px}.track{height:9px;background:#26364d;border-radius:9px;overflow:hidden}.fill{height:100%;border-radius:9px;background:var(--blue)}.barrow b{text-align:right;font-size:11px}
+nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:blur(15px);border-top:1px solid var(--line);padding:9px max(12px,env(safe-area-inset-right)) calc(9px + env(safe-area-inset-bottom));display:flex;justify-content:center;gap:5px;z-index:5}nav button{flex:1;max-width:180px;background:transparent;color:var(--muted);padding:8px 4px;border-radius:10px;font-size:11px}nav button span{display:block;font-size:18px;margin-bottom:3px}nav button.active{background:#1b3444;color:var(--green)}
+.view{display:none}.view.active{display:block}.muted{color:var(--muted)}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:12px}
+.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#234b3d;color:#eafff5;padding:10px 15px;border-radius:12px;z-index:20;display:none}
+@media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.card.wide2{grid-column:span 2}.formgrid{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:390px){.big{font-size:27px}.formgrid{grid-template-columns:1fr}.field.wide{grid-column:auto}}
+@media print{body{background:white;color:#111}.no-print,nav,header .logo{display:none!important}main{padding:0}.card,.balance{background:white;color:#111;border:1px solid #bbb;box-shadow:none}.eyebrow,.metric small,.muted,.item small{color:#555}.metric,.item{background:white;border:1px solid #ddd}.positive{color:#087a4b}.negative{color:#b21f35}.big{color:#111}}
+</style>
+</head>
+<body>
+<div class="toast" id="toast"></div>
+<header><div class="brand"><div class="logo">↗</div><div><h1>Meu Financeiro</h1><p>CONTROLE FINANCEIRO PESSOAL</p></div></div><button class="secondary no-print" id="backupBtn">Backup</button></header>
+<main>
+  <div class="monthrow no-print"><div><label for="monthFilter">PERÍODO DE ANÁLISE</label><br><input type="month" id="monthFilter"></div><button class="secondary" id="pdfBtn">Gerar PDF ↗</button></div>
+  <section id="home" class="view active">
+    <div class="balance"><div class="eyebrow">Saldo do período</div><div class="big" id="balance">R$ 0,00</div><div class="twocol"><div class="metric"><small>↙ Total de entradas</small><strong class="positive" id="incomeTotal">R$ 0,00</strong></div><div class="metric"><small>↗ Total de saídas</small><strong class="negative" id="expenseTotal">R$ 0,00</strong></div></div></div>
+    <div class="grid">
+      <div class="card wide2"><h2>Despesas por categoria</h2><div id="categoryChart" class="muted">Nenhuma despesa neste período.</div></div>
+      <div class="card wide2"><h2>Crédito x débito</h2><div id="paymentChart" class="muted">Nenhuma despesa neste período.</div></div>
+      <div class="card full"><div class="sectionhead"><h2>Movimentações recentes</h2><span class="muted" id="countLabel">0 lançamentos</span></div><div id="recentList" class="list"></div></div>
+    </div>
+  </section>
+  <section id="expenses" class="view">
+    <div class="card"><div class="sectionhead"><h2>Nova despesa</h2><span class="muted">Saída</span></div>
+      <form id="expenseForm"><div class="formgrid">
+        <div class="field"><label>Estabelecimento / local</label><input required name="place" placeholder="Ex.: Supermercado"></div>
+        <div class="field"><label>Produto ou serviço</label><input required name="description" placeholder="Ex.: Compras do mês"></div>
+        <div class="field"><label>Valor (R$)</label><input required name="amount" type="number" min="0.01" step="0.01" placeholder="0,00"></div>
+        <div class="field"><label>Data da compra</label><input required name="date" type="date"></div>
+        <div class="field"><label>Categoria</label><select name="category"><option>Alimentação</option><option>Moradia</option><option>Transporte</option><option>Saúde</option><option>Lazer</option><option>Educação</option><option>Compras</option><option>Assinaturas</option><option>Contas</option><option>Outros</option></select></div>
+        <div class="field"><label>Pagamento</label><select name="payment"><option>Débito</option><option>Crédito</option><option>Dinheiro / Pix</option></select></div>
+      </div><div class="actions"><button class="primary" type="submit">Salvar despesa</button></div></form>
+    </div>
+    <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Despesas do período</h2><span id="expenseCount" class="muted"></span></div><div id="expenseList" class="list"></div></div>
+  </section>
+  <section id="incomes" class="view">
+    <div class="card"><div class="sectionhead"><h2>Nova receita</h2><span class="muted">Entrada</span></div>
+      <form id="incomeForm"><div class="formgrid">
+        <div class="field wide"><label>Descrição da entrada</label><input required name="description" placeholder="Ex.: Salário"></div>
+        <div class="field"><label>Valor (R$)</label><input required name="amount" type="number" min="0.01" step="0.01" placeholder="0,00"></div>
+        <div class="field"><label>Data do recebimento</label><input required name="date" type="date"></div>
+        <div class="field"><label>Categoria</label><select name="category"><option>Salário</option><option>Renda extra</option><option>Reembolso</option><option>Rendimentos</option><option>Vendas</option><option>Outros</option></select></div>
+      </div><div class="actions"><button class="primary" type="submit">Salvar receita</button></div></form>
+    </div>
+    <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Receitas do período</h2><span id="incomeCount" class="muted"></span></div><div id="incomeList" class="list"></div></div>
+  </section>
+  <section id="reports" class="view">
+    <div class="card"><h2>Resumo do mês</h2><div id="reportSummary" class="list"></div><p class="hint">Use “Gerar PDF” no topo para imprimir ou salvar este resumo como PDF pelo navegador do computador ou iPhone.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Despesas por forma de pagamento</h2><div id="reportPayments"></div></div>
+    <div class="card" style="margin-top:12px"><h2>Movimentações detalhadas do mês</h2><div id="reportTransactions" class="list"></div></div>
+  </section>
+  <section id="settings" class="view">
+    <div class="card"><h2>Seus dados</h2><p class="muted">Os lançamentos ficam armazenados neste navegador e neste aparelho. Não há conexão com bancos nem envio automático para servidores.</p><div class="actions"><button class="secondary" id="exportBtn">Exportar backup JSON</button><label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">Importar backup<input id="importFile" type="file" accept="application/json" hidden></label></div><p class="hint">Atenção: limpar os dados do Safari/navegador pode apagar os lançamentos. Faça backups regularmente. Para usar em outro aparelho, exporte e importe o arquivo JSON.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão inicial 0.1</p><p class="hint">Esta primeira versão registra receitas e despesas, calcula o saldo por mês, exibe gráficos simples e prepara relatórios para impressão em PDF.</p></div>
+  </section>
+</main>
+<nav class="no-print">
+  <button class="active" data-view="home"><span>⌂</span>Início</button>
+  <button data-view="expenses"><span>↗</span>Despesas</button>
+  <button data-view="incomes"><span>↙</span>Receitas</button>
+  <button data-view="reports"><span>▥</span>Relatórios</button>
+  <button data-view="settings"><span>⚙</span>Ajustes</button>
+</nav>
+<script>
+const KEY='meuFinanceiro.v1';
+const $=s=>document.querySelector(s);
+const money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
+const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
+const currentMonth=()=>today().slice(0,7);
+let data={expenses:[],incomes:[]};
+try{data=Object.assign(data,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
+$('#monthFilter').value=currentMonth();
+function save(){localStorage.setItem(KEY,JSON.stringify(data));render();toast('Lançamento salvo com sucesso.')}
+function toast(msg){const t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
+function selected(){return $('#monthFilter').value||currentMonth()}
+function inMonth(x){return (x.date||'').slice(0,7)===selected()}
+function sum(arr){return arr.reduce((s,x)=>s+Number(x.amount||0),0)}
+function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
+function itemHTML(x,type){const label=type==='expense'?`${x.place} · ${x.description}`:x.description;return `<div class="item"><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(x.date)} · ${escapeHtml(x.category||'')} ${x.payment?'· '+escapeHtml(x.payment):''}</small></div><div style="display:flex;align-items:center;gap:9px"><span class="amount ${type==='income'?'positive':'negative'}">${type==='income'?'+':'−'} ${money(x.amount)}</span><button class="secondary no-print" aria-label="Excluir" onclick="removeItem('${type}','${x.id}')">×</button></div></div>`}
+function listHTML(arr,type){return arr.length?arr.slice().sort((a,b)=>b.date.localeCompare(a.date)).map(x=>itemHTML(x,type)).join(''):'<div class="empty">Nenhum lançamento neste período.</div>'}
+function bar(label,value,max,color){const pct=max?Math.max(2,value/max*100):0;return `<div class="barrow"><span>${escapeHtml(label)}</span><div class="track"><div class="fill" style="width:${pct}%;background:${color}"></div></div><b>${money(value)}</b></div>`}
+function render(){
+ const ex=data.expenses.filter(inMonth),inc=data.incomes.filter(inMonth),out=sum(ex),inside=sum(inc),balance=inside-out;
+ $('#balance').textContent=money(balance);$('#balance').style.color=balance<0?'var(--red)':'var(--text)';
+ $('#incomeTotal').textContent=money(inside);$('#expenseTotal').textContent=money(out);
+ $('#countLabel').textContent=`${ex.length+inc.length} lançamentos`;
+ const recent=[...ex.map(x=>({...x,type:'expense'})),...inc.map(x=>({...x,type:'income'}))].sort((a,b)=>b.date.localeCompare(a.date)).slice(0,5);
+ $('#recentList').innerHTML=recent.length?recent.map(x=>itemHTML(x,x.type)).join(''):'<div class="empty">Adicione sua primeira receita ou despesa.</div>';
+ $('#expenseList').innerHTML=listHTML(ex,'expense');$('#incomeList').innerHTML=listHTML(inc,'income');
+ $('#expenseCount').textContent=`${ex.length} registros`;$('#incomeCount').textContent=`${inc.length} registros`;
+ const cats={};ex.forEach(x=>cats[x.category]=(cats[x.category]||0)+Number(x.amount));const entries=Object.entries(cats).sort((a,b)=>b[1]-a[1]);
+ $('#categoryChart').innerHTML=entries.length?entries.map(([k,v])=>bar(k,v,out,'#7daeff')).join(''):'<div class="empty">Nenhuma despesa neste período.</div>';
+ const payments={};ex.forEach(x=>payments[x.payment]=(payments[x.payment]||0)+Number(x.amount));const p=Object.entries(payments);
+ $('#paymentChart').innerHTML=p.length?p.map(([k,v])=>bar(k,v,out,k==='Crédito'?'#ff7887':'#59d6a5')).join(''):'<div class="empty">Nenhuma despesa neste período.</div>';
+ $('#reportSummary').innerHTML=[['Total de receitas',money(inside),'positive'],['Total de despesas',money(out),'negative'],['Saldo do período',money(balance),balance>=0?'positive':'negative'],['Quantidade de despesas',String(ex.length),''],['Quantidade de receitas',String(inc.length),'']].map(([a,b,c])=>`<div class="item"><span>${a}</span><strong class="${c}">${b}</strong></div>`).join('');
+ $('#reportPayments').innerHTML=p.length?p.map(([k,v])=>bar(k,v,out,k==='Crédito'?'#ff7887':'#59d6a5')).join(''):'<div class="empty">Sem despesas registradas.</div>';
+ const all=[...ex.map(x=>({...x,type:'expense'})),...inc.map(x=>({...x,type:'income'}))].sort((a,b)=>a.date.localeCompare(b.date));
+ $('#reportTransactions').innerHTML=all.length?all.map(x=>itemHTML(x,x.type)).join(''):'<div class="empty">Nenhum lançamento neste período.</div>';
+}
+function removeItem(type,id){if(!confirm('Deseja excluir este lançamento?'))return;data[type==='expense'?'expenses':'incomes']=data[type==='expense'?'expenses':'incomes'].filter(x=>x.id!==id);localStorage.setItem(KEY,JSON.stringify(data));render();toast('Lançamento excluído.')}
+window.removeItem=removeItem;
+$('#expenseForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);data.expenses.push({id:crypto.randomUUID(),place:f.get('place').trim(),description:f.get('description').trim(),amount:Number(f.get('amount')),date:f.get('date'),category:f.get('category'),payment:f.get('payment')});e.target.reset();e.target.elements.date.value=today();save()});
+$('#incomeForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target);data.incomes.push({id:crypto.randomUUID(),description:f.get('description').trim(),amount:Number(f.get('amount')),date:f.get('date'),category:f.get('category')});e.target.reset();e.target.elements.date.value=today();save()});
+document.querySelectorAll('nav button').forEach(b=>b.addEventListener('click',()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.toggle('active',x===b));document.querySelectorAll('.view').forEach(x=>x.classList.toggle('active',x.id===b.dataset.view));window.scrollTo(0,0)}));
+$('#monthFilter').addEventListener('change',render);
+function backup(){const blob=new Blob([JSON.stringify(data,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=`meu-financeiro-backup-${today()}.json`;a.click();URL.revokeObjectURL(a.href)}
+$('#backupBtn').onclick=backup;$('#exportBtn').onclick=backup;
+$('#importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!Array.isArray(obj.expenses)||!Array.isArray(obj.incomes))throw Error();if(confirm('Importar este backup e substituir os dados atuais?')){data=obj;localStorage.setItem(KEY,JSON.stringify(data));render();toast('Backup importado.')}}catch(err){alert('Arquivo de backup inválido.')}e.target.value=''};
+$('#pdfBtn').onclick=()=>window.print();
+$('#expenseForm').elements.date.value=today();$('#incomeForm').elements.date.value=today();
+render();
+if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
+</script>
+</body></html>
