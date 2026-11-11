@@ -53,7 +53,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
         <div class="field"><label>Pagamento</label><select name="payment" id="expensePayment"><option>Débito</option><option>Crédito</option><option>Dinheiro / Pix</option></select></div>
         <div class="field" id="cardField" style="display:none"><label>Cartão de crédito</label><select name="cardId" id="expenseCard"><option value="">Selecione um cartão</option></select></div>
         <div class="field" id="installmentsField" style="display:none"><label>Quantidade de parcelas</label><select name="installments" id="expenseInstallments"><option value="1">À vista (1x)</option><option value="2">2 vezes</option><option value="3">3 vezes</option><option value="4">4 vezes</option><option value="5">5 vezes</option><option value="6">6 vezes</option><option value="7">7 vezes</option><option value="8">8 vezes</option><option value="9">9 vezes</option><option value="10">10 vezes</option><option value="11">11 vezes</option><option value="12">12 vezes</option><option value="18">18 vezes</option><option value="24">24 vezes</option></select></div>
-      </div><p class="subtle" id="installmentHint" style="display:none">As parcelas serão lançadas automaticamente nos meses das respectivas faturas, conforme o fechamento e vencimento do cartão.</p><div class="actions"><button class="primary" type="submit">Salvar despesa</button></div></form>
+      </div><p class="subtle" id="installmentHint" style="display:none">A primeira parcela será lançada no mês da compra; as demais, nos meses seguintes, usando o dia de vencimento do cartão.</p><div class="actions"><button class="primary" type="submit">Salvar despesa</button></div></form>
     </div>
     <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Despesas do período</h2><span id="expenseCount" class="muted"></span></div><div id="expenseList" class="list"></div></div>
   </section>
@@ -76,7 +76,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
         <div class="field"><label>Dia de fechamento</label><input required name="closingDay" type="number" min="1" max="31" value="10"></div>
         <div class="field"><label>Dia de vencimento</label><input required name="dueDay" type="number" min="1" max="31" value="20"></div>
       </div><div class="actions"><button class="primary" type="submit">Salvar cartão</button></div></form>
-      <p class="hint">Informe o fechamento e o vencimento que aparecem na fatura. Compras após o fechamento entram na próxima fatura.</p>
+      <p class="hint">Informe o fechamento e o vencimento que aparecem na fatura. A primeira parcela fica no mês da compra; as seguintes entram nos meses posteriores, no dia de vencimento cadastrado.</p>
     </div>
     <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Meus cartões</h2><span class="muted" id="cardCount"></span></div><div id="cardList" class="list"></div></div>
     <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Faturas do período</h2><span class="muted" id="invoiceMonth"></span></div><div id="invoiceList" class="list"></div></div>
@@ -88,7 +88,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
   </section>
   <section id="settings" class="view">
     <div class="card"><h2>Seus dados</h2><p class="muted">Os lançamentos ficam armazenados neste navegador e neste aparelho. Não há conexão com bancos nem envio automático para servidores.</p><div class="actions"><button class="secondary" id="exportBtn">Exportar backup JSON</button><label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">Importar backup<input id="importFile" type="file" accept="application/json" hidden></label></div><p class="hint">Atenção: limpar os dados do Safari/navegador pode apagar os lançamentos. Faça backups regularmente. Para usar em outro aparelho, exporte e importe o arquivo JSON.</p></div>
-    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.4</p><p class="hint">Agora também controla cartões de crédito, compras parceladas e faturas mensais.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.5</p><p class="hint">Controla cartões, compras parceladas e faturas. A primeira parcela fica no mês da compra; as demais, nos meses seguintes.</p></div>
   </section>
 </main>
 <nav class="no-print">
@@ -117,7 +117,7 @@ function sum(arr){return arr.reduce((s,x)=>s+Number(x.amount||0),0)}
 function formatDate(s){if(!s)return '-';const a=s.split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:s}
 function cardName(id){return data.cards.find(c=>c.id===id)?.name||'Cartão removido'}
 function invoiceKey(cardId,month){return `${cardId}|${month}`}
-function dueDateForPurchase(purchaseDate,card){const [yy,mm,dd]=purchaseDate.split('-').map(Number);let y=yy,m=mm;if(dd>Number(card.closingDay)){m++;if(m>12){m=1;y++;}}if(Number(card.dueDay)<=Number(card.closingDay)){m++;if(m>12){m=1;y++;}}const last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(Number(card.dueDay),last)).padStart(2,'0')}`}
+function dueDateForPurchase(purchaseDate,card){const [y,m]=purchaseDate.split('-').map(Number);const last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(Number(card.dueDay),last)).padStart(2,'0')}` }
 function addMonthsDate(date,n,day){let [y,m]=date.split('-').map(Number);m+=n;while(m>12){m-=12;y++;}const last=new Date(y,m,0).getDate();return `${y}-${String(m).padStart(2,'0')}-${String(Math.min(day,last)).padStart(2,'0')}`}
 function escapeHtml(s){return String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]))}
 function itemHTML(x,type){const label=type==='expense'?`${x.place||''} · ${x.description||''}`:x.description;const extra=x.installmentCount>1?` · Parcela ${x.installmentIndex}/${x.installmentCount}`:'';const card=x.cardId?` · ${escapeHtml(cardName(x.cardId))}`:'';return `<div class="item"><div><strong>${escapeHtml(label)}</strong><small>${escapeHtml(formatDate(x.date))} · ${escapeHtml(x.category||'')} ${x.payment?'· '+escapeHtml(x.payment):''}${card}${extra}</small></div><div style="display:flex;align-items:center;gap:9px"><span class="amount ${type==='income'?'positive':'negative'}">${type==='income'?'+':'−'} ${money(x.amount)}</span><button class="secondary no-print" aria-label="Excluir" onclick="removeItem('${type}','${x.id}')">×</button></div></div>`}
