@@ -25,7 +25,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
 .view{display:none}.view.active{display:block}.muted{color:var(--muted)}.hint{font-size:11px;color:var(--muted);line-height:1.5;margin-top:12px}
 .pill{display:inline-block;padding:4px 8px;border-radius:999px;background:#1b3444;color:var(--green);font-size:10px}.invoice-paid{color:var(--green)}.invoice-open{color:#ffcc7a}.subtle{font-size:11px;color:var(--muted);line-height:1.45}.toast{position:fixed;top:14px;left:50%;transform:translateX(-50%);background:#234b3d;color:#eafff5;padding:10px 15px;border-radius:12px;z-index:20;display:none}
 @media(min-width:650px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}.card.wide2{grid-column:span 2}.formgrid{grid-template-columns:repeat(3,1fr)}}
-@media(max-width:390px){.big{font-size:27px}.formgrid{grid-template-columns:1fr}.field.wide{grid-column:auto}}
+@media(max-width:390px){.big{font-size:27px}.formgrid{grid-template-columns:1fr}.field.wide{grid-column:auto}nav button{font-size:9px}nav button span{font-size:16px}}
 @media print{body{background:white;color:#111}.no-print,nav,header .logo{display:none!important}main{padding:0}.card,.balance{background:white;color:#111;border:1px solid #bbb;box-shadow:none}.eyebrow,.metric small,.muted,.item small{color:#555}.metric,.item{background:white;border:1px solid #ddd}.positive{color:#087a4b}.negative{color:#b21f35}.big{color:#111}}
 </style>
 </head>
@@ -81,6 +81,35 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
     <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Meus cartões</h2><span class="muted" id="cardCount"></span></div><div id="cardList" class="list"></div></div>
     <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Faturas do período</h2><span class="muted" id="invoiceMonth"></span></div><div id="invoiceList" class="list"></div></div>
   </section>
+  <section id="planning" class="view">
+    <div class="balance"><div class="eyebrow">Patrimônio investido · valor atual</div><div class="big" id="portfolioCurrent">R$ 0,00</div><div class="twocol"><div class="metric"><small>Valor aplicado</small><strong id="portfolioPrincipal">R$ 0,00</strong></div><div class="metric"><small>Resultado acumulado</small><strong id="portfolioReturn">R$ 0,00</strong></div></div><p class="subtle">Valores informados por você. Não há conexão automática com bancos ou corretoras.</p></div>
+    <div class="card"><div class="sectionhead"><h2>Minhas metas financeiras</h2><span class="muted" id="goalCount"></span></div>
+      <form id="goalForm"><div class="formgrid">
+        <div class="field"><label>Nome da meta</label><input required name="name" placeholder="Ex.: Reserva de emergência"></div>
+        <div class="field"><label>Categoria</label><select name="category"><option>Reserva de emergência</option><option>Viagem</option><option>Imóvel</option><option>Veículo</option><option>Aquisição de bens</option><option>Independência financeira</option><option>Outra</option></select></div>
+        <div class="field"><label>Valor desejado (R$)</label><input required name="target" type="number" min="0.01" step="0.01" placeholder="30000"></div>
+        <div class="field"><label>Valor já reservado (R$)</label><input name="saved" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Aporte mensal planejado (R$)</label><input name="monthly" type="number" min="0" step="0.01" value="0"></div>
+        <div class="field"><label>Prazo desejado</label><input name="deadline" type="month"></div>
+      </div><div class="actions"><button class="primary" type="submit">Criar meta</button></div></form>
+      <div id="goalList" class="list" style="margin-top:14px"></div>
+    </div>
+    <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Cadastrar investimento</h2><span class="muted">Acompanhamento manual</span></div>
+      <form id="investmentForm"><div class="formgrid">
+        <div class="field"><label>Tipo de investimento</label><select name="type"><option>CDB</option><option>Renda fixa em dólar</option><option>Tesouro Direto</option><option>Fundos imobiliários (FIIs)</option><option>Ações</option><option>ETFs</option><option>Fundos de investimento</option><option>Criptomoedas</option><option>Outro</option></select></div>
+        <div class="field"><label>Nome / ativo / ticker</label><input required name="name" placeholder="Ex.: CDB 110% CDI ou MXRF11"></div>
+        <div class="field"><label>Instituição / corretora</label><input name="institution" placeholder="Ex.: Banco ou corretora"></div>
+        <div class="field"><label>Moeda</label><select name="currency" id="investmentCurrency"><option value="BRL">Real (BRL)</option><option value="USD">Dólar (USD)</option></select></div>
+        <div class="field"><label>Valor aplicado</label><input required name="principal" type="number" min="0.01" step="0.01" placeholder="1000"></div>
+        <div class="field"><label>Valor atual</label><input required name="current" type="number" min="0" step="0.01" placeholder="1050"></div>
+        <div class="field" id="investmentFxField" style="display:none"><label>Cotação do dólar (R$ por US$ 1)</label><input name="fxRate" id="investmentFx" type="number" min="0.0001" step="0.0001" placeholder="5,00"></div>
+        <div class="field"><label>Data da aplicação</label><input required name="date" type="date"></div>
+      </div><p class="hint">Para ativos em dólar, informe os valores em USD e a cotação utilizada. O patrimônio será convertido para reais com essa cotação.</p><div class="actions"><button class="primary" type="submit">Salvar investimento</button></div></form>
+    </div>
+    <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Carteira de investimentos</h2><span class="muted" id="investmentCount"></span></div><div id="investmentList" class="list"></div></div>
+    <div class="card" style="margin-top:12px"><h2>Distribuição por modalidade</h2><div id="investmentAllocation"></div></div>
+    <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Movimentações de investimentos</h2><span class="muted" id="investmentMovementCount"></span></div><div id="investmentMovementList" class="list"></div><p class="hint">Aportes e resgates registrados aqui atualizam a carteira, mas não entram como receita ou despesa no orçamento mensal.</p></div>
+  </section>
   <section id="reports" class="view">
     <div class="card"><h2>Resumo do mês</h2><div id="reportSummary" class="list"></div><p class="hint">Use “Gerar PDF” no topo para criar e compartilhar o arquivo PDF deste período.</p></div>
     <div class="card" style="margin-top:12px"><h2>Despesas por forma de pagamento</h2><div id="reportPayments"></div></div>
@@ -88,7 +117,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
   </section>
   <section id="settings" class="view">
     <div class="card"><h2>Seus dados</h2><p class="muted">Os lançamentos ficam armazenados neste navegador e neste aparelho. Não há conexão com bancos nem envio automático para servidores.</p><div class="actions"><button class="secondary" id="exportBtn">Exportar backup JSON</button><label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">Importar backup<input id="importFile" type="file" accept="application/json" hidden></label></div><p class="hint">Atenção: limpar os dados do Safari/navegador pode apagar os lançamentos. Faça backups regularmente. Para usar em outro aparelho, exporte e importe o arquivo JSON.</p></div>
-    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.5</p><p class="hint">Controla cartões, compras parceladas e faturas. A primeira parcela fica no mês da compra; as demais, nos meses seguintes.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.6</p><p class="hint">Controla cartões, compras parceladas, metas financeiras e investimentos com acompanhamento semiautomático. A primeira parcela fica no mês da compra; as demais, nos meses seguintes.</p></div>
   </section>
 </main>
 <nav class="no-print">
@@ -96,6 +125,7 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
   <button data-view="expenses"><span>↗</span>Despesas</button>
   <button data-view="incomes"><span>↙</span>Receitas</button>
   <button data-view="cards"><span>▣</span>Cartões</button>
+  <button data-view="planning"><span>◎</span>Metas/Inv.</button>
   <button data-view="reports"><span>▥</span>Relatórios</button>
   <button data-view="settings"><span>⚙</span>Ajustes</button>
 </nav>
@@ -105,9 +135,9 @@ const $=s=>document.querySelector(s);
 const money=n=>Number(n||0).toLocaleString('pt-BR',{style:'currency',currency:'BRL'});
 const today=()=>{const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`};
 const currentMonth=()=>today().slice(0,7);
-let data={expenses:[],incomes:[],cards:[],paidInvoices:{}};
+let data={expenses:[],incomes:[],cards:[],paidInvoices:{},goals:[],investments:[],investmentMovements:[]};
 try{data=Object.assign(data,JSON.parse(localStorage.getItem(KEY)||'{}'))}catch(e){}
-if(!Array.isArray(data.cards))data.cards=[];if(!data.paidInvoices||typeof data.paidInvoices!=='object')data.paidInvoices={};
+if(!Array.isArray(data.cards))data.cards=[];if(!data.paidInvoices||typeof data.paidInvoices!=='object')data.paidInvoices={};if(!Array.isArray(data.goals))data.goals=[];if(!Array.isArray(data.investments))data.investments=[];if(!Array.isArray(data.investmentMovements))data.investmentMovements=[];
 $('#monthFilter').value=currentMonth();
 function save(){localStorage.setItem(KEY,JSON.stringify(data));render();toast('Lançamento salvo com sucesso.')}
 function toast(msg){const t=$('#toast');t.textContent=msg;t.style.display='block';setTimeout(()=>t.style.display='none',2200)}
@@ -153,7 +183,29 @@ function render(){
  const all=[...ex.map(x=>({...x,type:'expense'})),...inc.map(x=>({...x,type:'income'}))].sort((a,b)=>a.date.localeCompare(b.date));
  $('#reportTransactions').innerHTML=all.length?all.map(x=>itemHTML(x,x.type)).join(''):'<div class="empty">Nenhum lançamento neste período.</div>';
  renderCards();
+ renderPlanning();
 }
+function renderPlanning(){
+ const goals=data.goals||[],investments=data.investments||[],moves=data.investmentMovements||[];
+ $('#goalCount').textContent=`${goals.length} meta(s)`;
+ $('#goalList').innerHTML=goals.length?goals.map(g=>{const pct=g.target>0?Math.min(100,Math.max(0,Number(g.saved||0)/Number(g.target)*100)):0;return `<div class="item" style="display:block"><div class="sectionhead"><div><strong>${escapeHtml(g.name)}</strong><small>${escapeHtml(g.category)}${g.deadline?' · Prazo: '+escapeHtml(g.deadline.split('-').reverse().join('/')):''}</small></div><strong>${pct.toFixed(1).replace('.',',')}%</strong></div><div class="track"><div class="fill" style="width:${pct}%"></div></div><div class="sectionhead" style="margin:8px 0 0"><small>${money(g.saved)} de ${money(g.target)}</small><small>Faltam ${money(Math.max(0,Number(g.target)-Number(g.saved)))}</small></div><small>Aporte mensal planejado: ${money(g.monthly||0)}</small><div class="actions"><button class="secondary" onclick="addGoalAmount('${g.id}')">Adicionar valor</button><button class="secondary" onclick="removeGoal('${g.id}')">Excluir</button></div></div>`}).join(''):'<div class="empty">Você ainda não cadastrou metas financeiras.</div>';
+ const principal=investments.reduce((s,x)=>s+Number(x.principalBRL||0),0),current=investments.reduce((s,x)=>s+Number(x.currentBRL||0),0),result=current-principal;
+ $('#portfolioCurrent').textContent=money(current);$('#portfolioPrincipal').textContent=money(principal);$('#portfolioReturn').textContent=(result>=0?'+ ':'− ')+money(Math.abs(result));$('#portfolioReturn').className=result>=0?'positive':'negative';
+ $('#investmentCount').textContent=`${investments.length} ativo(s)`;
+ $('#investmentList').innerHTML=investments.length?investments.map(x=>{const gain=Number(x.currentBRL||0)-Number(x.principalBRL||0),pct=Number(x.principalBRL)>0?gain/Number(x.principalBRL)*100:0;const curr=x.currency==='USD'?'US$':'R$';return `<div class="item" style="align-items:flex-start"><div style="min-width:0;flex:1"><strong>${escapeHtml(x.name)} <span class="pill">${escapeHtml(x.type)}</span></strong><small>${escapeHtml(x.institution||'Instituição não informada')} · ${x.currency==='USD'?'USD convertido a '+Number(x.fxRate||0).toLocaleString('pt-BR',{minimumFractionDigits:2,maximumFractionDigits:4}):'BRL'}</small><small>Aplicado: ${curr} ${Number(x.principalNative||0).toLocaleString('pt-BR',{minimumFractionDigits:2})} · Atual: ${curr} ${Number(x.currentNative||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</small><small>Equivalente atual: ${money(x.currentBRL)} · Resultado: <span class="${gain>=0?'positive':'negative'}">${gain>=0?'+':'−'}${money(Math.abs(gain))} (${pct.toFixed(2).replace('.',',')}%)</span></small><small>Aplicação em ${formatDate(x.date)}</small><div class="actions"><button class="secondary" onclick="investmentMovement('${x.id}','aporte')">Aportar</button><button class="secondary" onclick="investmentMovement('${x.id}','resgate')">Resgatar</button><button class="secondary" onclick="updateInvestmentValue('${x.id}')">Atualizar valor</button><button class="secondary" onclick="removeInvestment('${x.id}')">Excluir</button></div></div></div>`}).join(''):'<div class="empty">Cadastre seu primeiro investimento para acompanhar a carteira.</div>';
+ const groups={};investments.forEach(x=>groups[x.type]=(groups[x.type]||0)+Number(x.currentBRL||0));const max=Math.max(0,...Object.values(groups));$('#investmentAllocation').innerHTML=Object.keys(groups).length?Object.entries(groups).sort((a,b)=>b[1]-a[1]).map(([k,v])=>bar(k,v,max,'#59d6a5')).join(''):'<div class="empty">A distribuição aparecerá quando houver investimentos cadastrados.</div>';
+ $('#investmentMovementCount').textContent=`${moves.length} registro(s)`;
+ $('#investmentMovementList').innerHTML=moves.length?moves.slice().sort((a,b)=>(b.date||'').localeCompare(a.date||'')).slice(0,30).map(m=>{const inv=investments.find(x=>x.id===m.investmentId);return `<div class="item"><div><strong>${m.type==='aporte'?'Aporte':'Resgate'} · ${escapeHtml(inv?.name||'Investimento removido')}</strong><small>${formatDate(m.date)} · ${m.currency==='USD'?'US$':'R$'} ${Number(m.amountNative||0).toLocaleString('pt-BR',{minimumFractionDigits:2})}</small></div><span class="amount ${m.type==='aporte'?'positive':'negative'}">${m.type==='aporte'?'+':'−'} ${money(m.amountBRL)}</span></div>`}).join(''):'<div class="empty">Nenhum aporte ou resgate registrado.</div>';
+}
+function addGoalAmount(id){const g=data.goals.find(x=>x.id===id);if(!g)return;const raw=prompt(`Quanto deseja adicionar à meta "${g.name}"? Informe o valor em reais:`);if(raw===null)return;const amount=Number(raw.replace(',','.'));if(!Number.isFinite(amount)||amount<=0){alert('Informe um valor válido maior que zero.');return;}g.saved=Number(g.saved||0)+amount;save();}
+function removeGoal(id){if(!confirm('Excluir esta meta financeira?'))return;data.goals=data.goals.filter(x=>x.id!==id);save();}
+function investmentMovement(id,type){const inv=data.investments.find(x=>x.id===id);if(!inv)return;const raw=prompt(`Informe o valor do ${type} em ${inv.currency==='USD'?'dólares (USD)':'reais (BRL)'}:`);if(raw===null)return;const amount=Number(raw.replace(',','.'));if(!Number.isFinite(amount)||amount<=0){alert('Informe um valor válido maior que zero.');return;}const brl=amount*(inv.currency==='USD'?Number(inv.fxRate||0):1);if(type==='resgate'&&brl>Number(inv.currentBRL||0)+0.001){alert('O resgate não pode ser maior que o valor aplicado registrado.');return;}inv.principalNative=Number(inv.principalNative||0)+(type==='aporte'?amount:-amount);inv.principalBRL=Number(inv.principalBRL||0)+(type==='aporte'?brl:-brl);inv.currentNative=Number(inv.currentNative||0)+(type==='aporte'?amount:-amount);inv.currentBRL=Number(inv.currentBRL||0)+(type==='aporte'?brl:-brl);data.investmentMovements.push({id:crypto.randomUUID(),investmentId:id,type,amountNative:amount,amountBRL:brl,currency:inv.currency,date:today(),fxRate:inv.fxRate||1});save();toast(type==='aporte'?'Aporte registrado.':'Resgate registrado.');}
+function updateInvestmentValue(id){const inv=data.investments.find(x=>x.id===id);if(!inv)return;const curr=inv.currency==='USD'?'USD':'BRL';const raw=prompt(`Informe o valor atual total do investimento em ${curr}:`,String(inv.currentNative||0));if(raw===null)return;const value=Number(raw.replace(',','.'));if(!Number.isFinite(value)||value<0){alert('Informe um valor válido.');return;}let rate=Number(inv.fxRate||1);if(inv.currency==='USD'){const r=prompt('Informe a cotação atual do dólar em reais (R$ por US$ 1):',String(rate));if(r===null)return;rate=Number(r.replace(',','.'));if(!Number.isFinite(rate)||rate<=0){alert('Cotação inválida.');return;}}inv.currentNative=value;inv.fxRate=rate;inv.currentBRL=value*rate;inv.updatedAt=today();save();toast('Valor atualizado.');}
+function removeInvestment(id){if(!confirm('Excluir este investimento e seu histórico de aportes/resgates?'))return;data.investments=data.investments.filter(x=>x.id!==id);data.investmentMovements=data.investmentMovements.filter(x=>x.investmentId!==id);save();}
+window.addGoalAmount=addGoalAmount;window.removeGoal=removeGoal;window.investmentMovement=investmentMovement;window.updateInvestmentValue=updateInvestmentValue;window.removeInvestment=removeInvestment;
+$('#goalForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target),target=Number(f.get('target')),saved=Number(f.get('saved')||0);if(saved>target){alert('O valor reservado não pode ser maior que o valor desejado.');return;}data.goals.push({id:crypto.randomUUID(),name:f.get('name').trim(),category:f.get('category'),target,saved,monthly:Number(f.get('monthly')||0),deadline:f.get('deadline')||''});e.target.reset();save();toast('Meta financeira criada.');});
+$('#investmentCurrency').addEventListener('change',()=>{$('#investmentFxField').style.display=$('#investmentCurrency').value==='USD'?'flex':'none';});
+$('#investmentForm').addEventListener('submit',e=>{e.preventDefault();const f=new FormData(e.target),currency=f.get('currency'),principal=Number(f.get('principal')),current=Number(f.get('current')),rate=currency==='USD'?Number(f.get('fxRate')):1;if(!Number.isFinite(principal)||principal<=0||!Number.isFinite(current)||current<0||!Number.isFinite(rate)||rate<=0){alert('Confira os valores e a cotação informados.');return;}data.investments.push({id:crypto.randomUUID(),type:f.get('type'),name:f.get('name').trim(),institution:f.get('institution').trim(),currency,principalNative:principal,currentNative:current,fxRate:rate,principalBRL:principal*rate,currentBRL:current*rate,date:f.get('date'),updatedAt:today()});e.target.reset();e.target.elements.date.value=today();$('#investmentFxField').style.display='none';save();toast('Investimento cadastrado.');});
 function removeItem(type,id){const arr=data[type==='expense'?'expenses':'incomes'];const target=arr.find(x=>x.id===id);if(!target)return;const grouped=type==='expense'&&target.purchaseId;const msg=grouped?'Excluir esta compra e todas as suas parcelas?':'Deseja excluir este lançamento?';if(!confirm(msg))return;data[type==='expense'?'expenses':'incomes']=arr.filter(x=>grouped?x.purchaseId!==target.purchaseId:x.id!==id);localStorage.setItem(KEY,JSON.stringify(data));render();toast('Lançamento excluído.')}
 window.removeItem=removeItem;
 $('#expensePayment').addEventListener('change',updateCardFields);
@@ -166,7 +218,7 @@ $('#monthFilter').addEventListener('change',render);
 async function backup(){
   // Rele a fonte persistida no momento da exportação e compare com o estado em memória.
   // Isso evita gerar um arquivo vazio caso a tela e o armazenamento estejam dessincronizados.
-  const count=x=>(Array.isArray(x?.expenses)?x.expenses.length:0)+(Array.isArray(x?.incomes)?x.incomes.length:0)+(Array.isArray(x?.cards)?x.cards.length:0);
+  const count=x=>(Array.isArray(x?.expenses)?x.expenses.length:0)+(Array.isArray(x?.incomes)?x.incomes.length:0)+(Array.isArray(x?.cards)?x.cards.length:0)+(Array.isArray(x?.goals)?x.goals.length:0)+(Array.isArray(x?.investments)?x.investments.length:0)+(Array.isArray(x?.investmentMovements)?x.investmentMovements.length:0);
   let stored=null;
   try{stored=JSON.parse(localStorage.getItem(KEY)||'null')}catch(e){}
   const storedValid=stored&&Array.isArray(stored.expenses)&&Array.isArray(stored.incomes);
@@ -175,7 +227,7 @@ async function backup(){
   if(!source||!Array.isArray(source.expenses)||!Array.isArray(source.incomes)){
     alert('Não foi possível localizar seus lançamentos para criar o backup. Nenhum dado foi alterado.');return;
   }
-  const payload={format:'meu-financeiro-backup',version:2,exportedAt:new Date().toISOString(),expenses:source.expenses,incomes:source.incomes,cards:source.cards||[],paidInvoices:source.paidInvoices||{}};
+  const payload={format:'meu-financeiro-backup',version:3,exportedAt:new Date().toISOString(),expenses:source.expenses,incomes:source.incomes,cards:source.cards||[],paidInvoices:source.paidInvoices||{},goals:source.goals||[],investments:source.investments||[],investmentMovements:source.investmentMovements||[]};
   const total=count(payload);
   if(total===0){
     alert('O backup não foi gerado porque não encontramos receitas ou despesas salvas. Seus dados não foram alterados.');return;
@@ -193,7 +245,7 @@ async function backup(){
   toast(`Backup preparado: ${payload.expenses.length} despesas e ${payload.incomes.length} receitas.`);
 }
 $('#backupBtn').onclick=backup;$('#exportBtn').onclick=backup;
-$('#importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!Array.isArray(obj.expenses)||!Array.isArray(obj.incomes))throw Error();if(confirm('Importar este backup e substituir os dados atuais?')){data={expenses:obj.expenses,incomes:obj.incomes,cards:Array.isArray(obj.cards)?obj.cards:[],paidInvoices:obj.paidInvoices&&typeof obj.paidInvoices==='object'?obj.paidInvoices:{}};localStorage.setItem(KEY,JSON.stringify(data));render();toast('Backup importado.')}}catch(err){alert('Arquivo de backup inválido.')}e.target.value=''};
+$('#importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!Array.isArray(obj.expenses)||!Array.isArray(obj.incomes))throw Error();if(confirm('Importar este backup e substituir os dados atuais?')){data={expenses:obj.expenses,incomes:obj.incomes,cards:Array.isArray(obj.cards)?obj.cards:[],paidInvoices:obj.paidInvoices&&typeof obj.paidInvoices==='object'?obj.paidInvoices:{},goals:Array.isArray(obj.goals)?obj.goals:[],investments:Array.isArray(obj.investments)?obj.investments:[],investmentMovements:Array.isArray(obj.investmentMovements)?obj.investmentMovements:[]};localStorage.setItem(KEY,JSON.stringify(data));render();toast('Backup importado.')}}catch(err){alert('Arquivo de backup inválido.')}e.target.value=''};
 function pdfTextBytes(text){
   // PDF usa fonte Helvetica com WinAnsiEncoding; converte caracteres comuns para Windows-1252.
   const map={'€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8a,'‹':0x8b,'Œ':0x8c,'Ž':0x8e,'‘':0x91,'’':0x92,'“':0x93,'”':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9a,'›':0x9b,'œ':0x9c,'ž':0x9e,'Ÿ':0x9f};
@@ -274,7 +326,7 @@ async function generatePdf(){
   }catch(err){console.error(err);alert('Nao foi possivel gerar o PDF. Tente novamente pelo Safari ou navegador.');}
 }
 $('#pdfBtn').addEventListener('click',generatePdf);
-$('#expenseForm').elements.date.value=today();$('#incomeForm').elements.date.value=today();
+$('#expenseForm').elements.date.value=today();$('#incomeForm').elements.date.value=today();$('#investmentForm').elements.date.value=today();
 render();
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
 </script>
