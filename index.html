@@ -67,13 +67,13 @@ nav{position:fixed;bottom:0;left:0;right:0;background:#0b1220ee;backdrop-filter:
     <div class="card" style="margin-top:12px"><div class="sectionhead"><h2>Receitas do período</h2><span id="incomeCount" class="muted"></span></div><div id="incomeList" class="list"></div></div>
   </section>
   <section id="reports" class="view">
-    <div class="card"><h2>Resumo do mês</h2><div id="reportSummary" class="list"></div><p class="hint">Use “Gerar PDF” no topo para imprimir ou salvar este resumo como PDF pelo navegador do computador ou iPhone.</p></div>
+    <div class="card"><h2>Resumo do mês</h2><div id="reportSummary" class="list"></div><p class="hint">Use “Gerar PDF” no topo para criar e compartilhar o arquivo PDF deste período.</p></div>
     <div class="card" style="margin-top:12px"><h2>Despesas por forma de pagamento</h2><div id="reportPayments"></div></div>
     <div class="card" style="margin-top:12px"><h2>Movimentações detalhadas do mês</h2><div id="reportTransactions" class="list"></div></div>
   </section>
   <section id="settings" class="view">
     <div class="card"><h2>Seus dados</h2><p class="muted">Os lançamentos ficam armazenados neste navegador e neste aparelho. Não há conexão com bancos nem envio automático para servidores.</p><div class="actions"><button class="secondary" id="exportBtn">Exportar backup JSON</button><label class="secondary" style="display:inline-flex;align-items:center;cursor:pointer">Importar backup<input id="importFile" type="file" accept="application/json" hidden></label></div><p class="hint">Atenção: limpar os dados do Safari/navegador pode apagar os lançamentos. Faça backups regularmente. Para usar em outro aparelho, exporte e importe o arquivo JSON.</p></div>
-    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão inicial 0.1</p><p class="hint">Esta primeira versão registra receitas e despesas, calcula o saldo por mês, exibe gráficos simples e prepara relatórios para impressão em PDF.</p></div>
+    <div class="card" style="margin-top:12px"><h2>Sobre o aplicativo</h2><p class="muted">Meu Financeiro · versão 0.3</p><p class="hint">Esta primeira versão registra receitas e despesas, calcula o saldo por mês, exibe gráficos simples e gera relatórios em PDF com resumo e movimentações detalhadas.</p></div>
   </section>
 </main>
 <nav class="no-print">
@@ -156,7 +156,86 @@ async function backup(){
 }
 $('#backupBtn').onclick=backup;$('#exportBtn').onclick=backup;
 $('#importFile').onchange=async e=>{const file=e.target.files[0];if(!file)return;try{const obj=JSON.parse(await file.text());if(!Array.isArray(obj.expenses)||!Array.isArray(obj.incomes))throw Error();if(confirm('Importar este backup e substituir os dados atuais?')){data=obj;localStorage.setItem(KEY,JSON.stringify(data));render();toast('Backup importado.')}}catch(err){alert('Arquivo de backup inválido.')}e.target.value=''};
-$('#pdfBtn').onclick=()=>window.print();
+function pdfTextBytes(text){
+  // PDF usa fonte Helvetica com WinAnsiEncoding; converte caracteres comuns para Windows-1252.
+  const map={'€':0x80,'‚':0x82,'ƒ':0x83,'„':0x84,'…':0x85,'†':0x86,'‡':0x87,'ˆ':0x88,'‰':0x89,'Š':0x8a,'‹':0x8b,'Œ':0x8c,'Ž':0x8e,'‘':0x91,'’':0x92,'“':0x93,'”':0x94,'•':0x95,'–':0x96,'—':0x97,'˜':0x98,'™':0x99,'š':0x9a,'›':0x9b,'œ':0x9c,'ž':0x9e,'Ÿ':0x9f};
+  return Array.from(String(text??'')).map(ch=>{const c=ch.codePointAt(0);if(c<=255)return c;if(map[ch]!=null)return map[ch];return 63;});
+}
+function makePdfBlob(){
+  const month=selected();
+  const ex=data.expenses.filter(inMonth).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const inc=data.incomes.filter(inMonth).slice().sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const totalOut=sum(ex),totalIn=sum(inc),balance=totalIn-totalOut;
+  const payments={};ex.forEach(x=>{const k=x.payment||'Não informado';payments[k]=(payments[k]||0)+Number(x.amount||0)});
+  const rows=[...ex.map(x=>({date:x.date,type:'Despesa',description:`${x.place||''} - ${x.description||''}`,category:x.category||'',payment:x.payment||'',amount:-Number(x.amount||0)})),...inc.map(x=>({date:x.date,type:'Receita',description:x.description||'',category:x.category||'',payment:'-',amount:Number(x.amount||0)}))].sort((a,b)=>(a.date||'').localeCompare(b.date||''));
+  const fmtDate=s=>{if(!s)return '-';const a=s.split('-');return a.length===3?`${a[2]}/${a[1]}/${a[0]}`:s};
+  const short=(s,n)=>{s=String(s??'').replace(/[\r\n\t]+/g,' ').trim();return s.length>n?s.slice(0,n-1)+'…':s};
+  const cmds=[];
+  let page=0,y=0;
+  function startPage(){page++;cmds.push('');y=800;drawText(42,y,'MEU FINANCEIRO',16,true);y-=22;drawText(42,y,`RELATORIO FINANCEIRO - ${month.split('-').reverse().join('/')}`,10,true);y-=15;drawText(42,y,`Gerado em ${new Date().toLocaleString('pt-BR')}`,8,false);y-=22;line(42,y,553,y);y-=18;}
+  function drawText(x,yy,str,size=9,bold=false){cmds[page-1]+=`BT /${bold?'F2':'F1'} ${size} Tf 1 0 0 1 ${x} ${yy} Tm <${pdfTextBytes(str).map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase()}> Tj ET\n`;}
+  function line(x1,y1,x2,y2){cmds[page-1]+=`0.75 w ${x1} ${y1} m ${x2} ${y2} l S\n`;}
+  startPage();
+  drawText(42,y,'RESUMO DO PERIODO',11,true);y-=18;
+  drawText(48,y,`Total de receitas: ${money(totalIn)}`,9,true);y-=15;
+  drawText(48,y,`Total de despesas: ${money(totalOut)}`,9,true);y-=15;
+  drawText(48,y,`Saldo do periodo: ${money(balance)}`,10,true);y-=15;
+  drawText(48,y,`Lancamentos: ${rows.length}  |  Receitas: ${inc.length}  |  Despesas: ${ex.length}`,8);y-=22;
+  drawText(42,y,'DESPESAS POR FORMA DE PAGAMENTO',10,true);y-=16;
+  const payEntries=Object.entries(payments);
+  if(payEntries.length){payEntries.forEach(([k,v])=>{drawText(48,y,`${k}: ${money(v)}`,8);y-=13;});}else{drawText(48,y,'Nenhuma despesa no periodo.',8);y-=13;}
+  y-=10;line(42,y,553,y);y-=18;
+  drawText(42,y,'MOVIMENTACOES DETALHADAS',10,true);y-=18;
+  function tableHeader(){drawText(42,y,'DATA',7,true);drawText(90,y,'TIPO',7,true);drawText(137,y,'DESCRICAO',7,true);drawText(325,y,'CATEGORIA',7,true);drawText(410,y,'PAGAMENTO',7,true);drawText(510,y,'VALOR',7,true);y-=7;line(42,y,553,y);y-=13;}
+  tableHeader();
+  if(!rows.length){drawText(42,y,'Nenhum lancamento encontrado para este periodo.',8);y-=14;}
+  rows.forEach(r=>{
+    if(y<55){startPage();drawText(42,y,'MOVIMENTACOES DETALHADAS (continuacao)',10,true);y-=18;tableHeader();}
+    drawText(42,y,fmtDate(r.date),7);drawText(90,y,r.type,7);
+    drawText(137,y,short(r.description,38),7);drawText(325,y,short(r.category,16),7);drawText(410,y,short(r.payment,14),7);
+    drawText(510,y,short(money(r.amount),14),7,true);y-=14;
+    line(42,y+5,553,y+5);
+  });
+  cmds.forEach((c,i)=>{cmds[i]+=`BT /F1 7 Tf 1 0 0 1 520 25 Tm <${pdfTextBytes(`Pagina ${i+1} de ${cmds.length}`).map(v=>v.toString(16).padStart(2,'0')).join('').toUpperCase()}> Tj ET\n`;});
+  const enc=new TextEncoder();
+  const objs=[];
+  objs[1]='<< /Type /Catalog /Pages 2 0 R >>';
+  objs[2]=`<< /Type /Pages /Kids [${cmds.map((_,i)=>`${5+i*2} 0 R`).join(' ')}] /Count ${cmds.length} >>`;
+  objs[3]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica /Encoding /WinAnsiEncoding >>';
+  objs[4]='<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold /Encoding /WinAnsiEncoding >>';
+  cmds.forEach((content,i)=>{
+    const pageObj=5+i*2,streamObj=pageObj+1,stream=enc.encode(content);
+    objs[pageObj]=`<< /Type /Page /Parent 2 0 R /MediaBox [0 0 595 842] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents ${streamObj} 0 R >>`;
+    objs[streamObj]={stream};
+  });
+  let parts=['%PDF-1.4\n%PDFGEN\n'],offsets=[0],length=enc.encode(parts[0]).length;
+  for(let i=1;i<objs.length;i++){
+    offsets[i]=length;
+    if(typeof objs[i]==='string'){
+      const chunk=`${i} 0 obj\n${objs[i]}\nendobj\n`;parts.push(chunk);length+=enc.encode(chunk).length;
+    }else{
+      const head=`${i} 0 obj\n<< /Length ${objs[i].stream.length} >>\nstream\n`,tail='\nendstream\nendobj\n';parts.push(head,objs[i].stream,tail);length+=enc.encode(head).length+objs[i].stream.length+enc.encode(tail).length;
+    }
+  }
+  const xref=length;let table=`xref\n0 ${objs.length}\n0000000000 65535 f \n`;
+  for(let i=1;i<objs.length;i++)table+=`${String(offsets[i]).padStart(10,'0')} 00000 n \n`;
+  const trailer=`trailer\n<< /Size ${objs.length} /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF`;
+  parts.push(table,trailer);
+  return new Blob(parts,{type:'application/pdf'});
+}
+async function generatePdf(){
+  try{
+    const blob=makePdfBlob();
+    const file=new File([blob],`meu-financeiro-relatorio-${selected()}.pdf`,{type:'application/pdf'});
+    if(navigator.canShare&&navigator.canShare({files:[file]})&&navigator.share){
+      try{await navigator.share({files:[file],title:'Relatorio Meu Financeiro'});return;}catch(err){if(err?.name==='AbortError')return;}
+    }
+    const url=URL.createObjectURL(blob),a=document.createElement('a');a.href=url;a.download=file.name;a.style.display='none';document.body.appendChild(a);a.click();
+    setTimeout(()=>{URL.revokeObjectURL(url);a.remove()},60000);
+    toast('PDF gerado. Verifique seus arquivos ou downloads.');
+  }catch(err){console.error(err);alert('Nao foi possivel gerar o PDF. Tente novamente pelo Safari ou navegador.');}
+}
+$('#pdfBtn').addEventListener('click',generatePdf);
 $('#expenseForm').elements.date.value=today();$('#incomeForm').elements.date.value=today();
 render();
 if('serviceWorker' in navigator && location.protocol.startsWith('http'))navigator.serviceWorker.register('./sw.js').catch(()=>{});
